@@ -1,0 +1,37 @@
+name: agent-request
+
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: Work to ask the agent for
+        required: true
+        type: string
+      issue:
+        description: Issue number to comment on; empty opens a new issue
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post the request as the Actions bot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUEST: ${{ inputs.request }}
+          ISSUE: ${{ inputs.issue }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          body="@No3214 ${REQUEST}"
+          if [ -n "${ISSUE}" ]; then
+            gh issue comment "${ISSUE}" --repo "${REPO}" --body "${body}"
+          else
+            title=$(printf '%s' "${REQUEST}" | head -c 240)
+            gh issue create --repo "${REPO}" --title "${title}" --body "${body}"
+          fi
